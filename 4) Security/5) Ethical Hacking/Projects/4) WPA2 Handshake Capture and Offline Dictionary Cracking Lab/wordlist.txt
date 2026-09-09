@@ -1,0 +1,22 @@
+# Small illustrative wordlist for this lab (in the spirit of rockyou.txt,
+# but tiny so the demo runs in seconds). One candidate passphrase per line.
+password123
+letmein123
+football1
+iloveyou1
+qwertyuiop
+sunshine12
+princess99
+dragonfire
+trustno1!!
+whatsupbro
+987654321a
+monkeybars
+superman12
+baseball99
+starwars12
+homesweet1
+summer2024
+welcome123
+freedom101
+chocolate1
