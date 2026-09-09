@@ -1,0 +1,14 @@
+{
+  "todo": [
+    {
+      "id": 1,
+      "title": "learning JSON",
+      "status": 0
+    },
+    {
+        "id": 2,
+        "title": "setup JSON serer",
+        "status": 0
+      }
+  ]
+}
