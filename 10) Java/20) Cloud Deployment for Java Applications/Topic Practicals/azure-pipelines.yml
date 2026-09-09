@@ -1,0 +1,87 @@
+# azure-pipelines.yml
+#
+# A real Azure DevOps pipeline definition that builds the companion
+# InventoryServiceApplication Spring Boot app (see
+# 02_InventoryServiceApplication.java in this same folder) and deploys it to
+# Azure App Service.
+#
+# Covers Theory chapter:
+#   20) Cloud Deployment for Java Applications/Theory/02 Deploying Java
+#   Applications on Azure.md ("Azure App Service for Java" -- this pipeline
+#   is the CI/CD equivalent of the `mvn clean package` + `az webapp up` /
+#   `mvn azure-webapp:deploy` commands shown in that section, run
+#   automatically on every push instead of by hand).
+#
+# IMPORTANT -- illustrative, requires real setup to run as-is:
+#   - A real Maven project (pom.xml + src/main/java/...) at the repo root.
+#   - An existing Azure App Service instance named "inventory-service" in
+#     resource group "inventory-rg" (or created ahead of time via
+#     `az webapp up` per the Theory chapter).
+#   - An Azure DevOps service connection named "azure-inventory-connection"
+#     with permission to deploy to that App Service, configured once in the
+#     Azure DevOps project settings (Project Settings -> Service connections).
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  mavenPomFile: "pom.xml"
+  appServiceName: "inventory-service"
+  resourceGroup: "inventory-rg"
+  jarFileName: "inventory-service-1.0.0.jar"
+
+stages:
+  - stage: Build
+    displayName: "Build and package the Spring Boot JAR"
+    jobs:
+      - job: BuildJar
+        steps:
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: "21"
+              jdkArchitectureOption: "x64"
+              jdkSourceOption: "PreInstalled"
+
+          - task: Maven@4
+            displayName: "mvn clean package"
+            inputs:
+              mavenPomFile: "$(mavenPomFile)"
+              goals: "clean package"
+              options: "-DskipTests"
+              publishJUnitResults: false
+
+          - task: CopyFiles@2
+            displayName: "Stage the built JAR for the deploy stage"
+            inputs:
+              sourceFolder: "$(System.DefaultWorkingDirectory)/target"
+              contents: "$(jarFileName)"
+              targetFolder: "$(Build.ArtifactStagingDirectory)"
+
+          - publish: "$(Build.ArtifactStagingDirectory)"
+            artifact: "inventory-service-jar"
+
+  - stage: Deploy
+    displayName: "Deploy to Azure App Service"
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment: DeployToAppService
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  displayName: "Deploy JAR to App Service (Java SE)"
+                  inputs:
+                    azureSubscription: "azure-inventory-connection"
+                    appType: "webAppLinux"
+                    appName: "$(appServiceName)"
+                    resourceGroupName: "$(resourceGroup)"
+                    package: "$(Pipeline.Workspace)/inventory-service-jar/$(jarFileName)"
+                    runtimeStack: "JAVA|21-java21"

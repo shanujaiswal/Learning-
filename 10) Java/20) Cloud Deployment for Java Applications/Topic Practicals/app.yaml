@@ -1,0 +1,40 @@
+# app.yaml
+#
+# A real Google App Engine Standard configuration file for the companion
+# InventoryServiceApplication Spring Boot app (see
+# 03_InventoryServiceApplication.java in this same folder), lifted directly
+# from Theory chapter 03's "App Engine Standard" example with
+# inventory-service-specific values.
+#
+# Covers Theory chapter:
+#   20) Cloud Deployment for Java Applications/Theory/03 Deploying Java
+#   Applications on GCP.md ("Google App Engine -- Standard vs Flexible for
+#   Java")
+#
+# IMPORTANT -- illustrative alongside a real deploy: `gcloud app deploy` (run
+# from the directory containing this file and a built target/*.jar, or a
+# pom.xml App Engine can build from source) reads exactly this file to
+# provision the GCP-managed Java 21 runtime, scaling policy, and environment
+# variables -- no Dockerfile required, which is the whole appeal of Standard
+# over Flexible/Cloud Run per the Theory chapter.
+#
+# Real secrets (DB passwords, etc.) should NOT be placed here in plaintext --
+# reference Secret Manager at runtime instead, per the same
+# externalize-configuration principle called out across all three cloud
+# chapters.
+runtime: java21
+instance_class: F2
+
+env_variables:
+  SPRING_PROFILES_ACTIVE: "production"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql:///inventory?cloudSqlInstance=inventory-project:us-central1:inventory-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 10
+  target_cpu_utilization: 0.65
+
+handlers:
+  - url: /.*
+    script: auto
+    secure: always

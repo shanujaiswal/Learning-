@@ -1,0 +1,65 @@
+# buildspec.yml
+#
+# A real AWS CodeBuild build specification for the companion
+# 01_InventoryServiceApplication.java Spring Boot app.
+#
+# Covers Theory chapter:
+#   20) Cloud Deployment for Java Applications/Theory/01 Deploying Java
+#   Applications on AWS.md ("ECS and Fargate -- Running Containerized Java
+#   Apps Without Managing Servers" -- this is the CI half of that flow: build
+#   the JAR, build+push the Docker image to ECR, and emit an imagedefinitions
+#   file that a CodePipeline ECS deploy stage consumes to update the Task
+#   Definition described in that same section).
+#
+# IMPORTANT -- illustrative, requires real setup to run as-is:
+#   - A real Maven project (pom.xml + src/main/java/...) at the repo root
+#     producing target/inventory-service-1.0.0.jar.
+#   - An ECR repository already created (aws ecr create-repository
+#     --repository-name inventory-service) and its URI supplied via the
+#     REPOSITORY_URI environment variable on the CodeBuild project.
+#   - A CodeBuild project with this file referenced as its buildspec, and IAM
+#     permissions to push to ECR (ecr:GetAuthorizationToken, ecr:PutImage, etc).
+
+version: 0.2
+
+env:
+  variables:
+    IMAGE_REPO_NAME: "inventory-service"
+    CONTAINER_NAME: "inventory-service"
+  # REPOSITORY_URI and AWS_DEFAULT_REGION are typically injected by the
+  # CodeBuild project's environment configuration rather than hardcoded here,
+  # e.g. REPOSITORY_URI=123456789.dkr.ecr.us-east-1.amazonaws.com/inventory-service
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$REPOSITORY_URI"
+      - COMMIT_HASH=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c 1-7)
+      - IMAGE_TAG="${COMMIT_HASH:-latest}"
+
+  build:
+    commands:
+      - echo "Compiling and packaging the Spring Boot JAR..."
+      - mvn -B clean package -DskipTests
+      - echo "Building the Docker image..."
+      - docker build -t "$IMAGE_REPO_NAME:$IMAGE_TAG" .
+      - docker tag "$IMAGE_REPO_NAME:$IMAGE_TAG" "$REPOSITORY_URI:$IMAGE_TAG"
+      - docker tag "$IMAGE_REPO_NAME:$IMAGE_TAG" "$REPOSITORY_URI:latest"
+
+  post_build:
+    commands:
+      - echo "Pushing the image to ECR..."
+      - docker push "$REPOSITORY_URI:$IMAGE_TAG"
+      - docker push "$REPOSITORY_URI:latest"
+      - echo "Writing imagedefinitions.json for the CodePipeline ECS deploy stage..."
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - target/inventory-service-1.0.0.jar

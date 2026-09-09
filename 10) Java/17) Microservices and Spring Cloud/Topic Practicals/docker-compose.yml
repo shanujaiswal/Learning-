@@ -1,0 +1,65 @@
+# docker-compose.yml
+#
+# Companion local multi-service stack for the Dockerfile + 06_InventoryServiceApplication.java
+# in this same folder -- runs the illustrative inventory-service container
+# alongside a real Postgres database container, matching the Theory chapter's
+# "docker-compose for Local Multi-Service Development" section.
+#
+# Covers Theory chapter:
+#   17) Microservices and Spring Cloud/Theory/06 Containerization and Orchestration Basics for Microservices.md
+#
+# IMPORTANT -- illustrative, requires real setup to run as-is:
+#   - The Dockerfile in this folder must be buildable (i.e. a real Maven
+#     project producing inventory-service-1.0.0.jar) for `build: .` below to
+#     succeed -- 06_InventoryServiceApplication.java alone is not a runnable
+#     Maven/Gradle project on its own (no pom.xml/build.gradle is included here).
+#   - InventoryServiceApplication.java's illustrative in-memory Map does NOT
+#     actually use the SPRING_DATASOURCE_* env vars below; a real
+#     implementation would add Spring Data JPA and a PostgreSQL driver
+#     dependency to genuinely persist into the inventory-db container.
+#
+# Run:
+#   docker-compose up --build       # builds the image and starts every service
+#   docker-compose down             # stops and removes containers (-v also drops volumes)
+#   docker-compose logs -f inventory-service
+
+version: "3.9"
+
+services:
+  inventory-service:
+    build: .                                    # builds from the Dockerfile in this same folder
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventory
+      SPRING_DATASOURCE_USERNAME: inventory_user
+      SPRING_DATASOURCE_PASSWORD: changeme
+    depends_on:
+      inventory-db:
+        condition: service_healthy               # waits for genuine DB readiness, not just container start
+                                                  # (see Theory chapter gotcha: depends_on alone only waits
+                                                  # for the process to START, not to finish initializing)
+
+  inventory-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: inventory
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data   # persists data across container restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-cache:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  inventory-db-data:

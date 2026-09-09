@@ -1,0 +1,65 @@
+# cloudbuild.yaml
+#
+# A real Google Cloud Build configuration that builds the companion
+# InventoryServiceApplication Spring Boot app (see
+# 03_InventoryServiceApplication.java in this same folder) into a container
+# image, pushes it to Artifact Registry/Container Registry, and deploys it to
+# Cloud Run -- directly mirroring the `gcloud builds submit` +
+# `gcloud run deploy` commands shown in Theory chapter 03's "Cloud Run --
+# Containerized Java, Serverless Economics" section, expressed as a
+# repeatable build config instead of two hand-typed commands.
+#
+# Covers Theory chapter:
+#   20) Cloud Deployment for Java Applications/Theory/03 Deploying Java
+#   Applications on GCP.md
+#
+# IMPORTANT -- illustrative, requires real setup to run as-is:
+#   - A real Maven project (pom.xml + src/main/java/...) plus a Dockerfile
+#     at the repo root using the same multi-stage pattern shown in the
+#     Theory chapter (build stage compiles the JAR, runtime stage copies it
+#     onto a slim JRE image and reads $PORT rather than hardcoding 8080).
+#   - A GCP project with Cloud Build, Cloud Run, and Artifact Registry (or
+#     Container Registry) APIs enabled, and the Cloud Build service account
+#     granted the Cloud Run Admin role.
+#
+# Run with:
+#   gcloud builds submit --config cloudbuild.yaml
+
+steps:
+  # 1. Build the container image (multi-stage Dockerfile compiles the JAR
+  #    inside the build, then packages just the runtime layer).
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/inventory-service:$SHORT_SHA"
+      - "."
+
+  # 2. Push the built image to Container Registry / Artifact Registry.
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/inventory-service:$SHORT_SHA"
+
+  # 3. Deploy the new image as a Cloud Run revision -- min-instances 0 keeps
+  #    the scale-to-zero economics the Theory chapter highlights as Cloud
+  #    Run's headline advantage over App Engine Flexible.
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "inventory-service"
+      - "--image=gcr.io/$PROJECT_ID/inventory-service:$SHORT_SHA"
+      - "--platform=managed"
+      - "--region=us-central1"
+      - "--min-instances=0"
+      - "--max-instances=10"
+      - "--set-env-vars=SPRING_PROFILES_ACTIVE=production"
+      - "--set-secrets=SPRING_DATASOURCE_PASSWORD=inventory-db-password:latest"
+
+images:
+  - "gcr.io/$PROJECT_ID/inventory-service:$SHORT_SHA"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

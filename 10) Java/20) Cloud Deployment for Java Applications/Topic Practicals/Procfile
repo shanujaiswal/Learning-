@@ -1,0 +1,26 @@
+# Procfile
+#
+# A real Elastic Beanstalk Procfile for the companion
+# 01_InventoryServiceApplication.java Spring Boot app, deployed via EB's
+# Java SE platform (a runnable JAR, not a WAR onto Tomcat).
+#
+# Covers Theory chapter:
+#   20) Cloud Deployment for Java Applications/Theory/01 Deploying Java
+#   Applications on AWS.md ("Deploying a Spring Boot JAR to Elastic
+#   Beanstalk" -- EB's Java SE platform looks for exactly this file at the
+#   application root to know how to start the process; without it, EB falls
+#   back to running the single JAR it finds, but an explicit Procfile is the
+#   documented, deterministic way to control the startup command, memory
+#   flags, and any JVM system properties).
+#
+# IMPORTANT -- illustrative alongside a real deploy: the jar filename below
+# must match whatever `mvn clean package` (see buildspec.yml in this same
+# folder) actually produces -- target/inventory-service-1.0.0.jar copied to
+# the EB deployment bundle root as inventory-service-1.0.0.jar.
+#
+# EB reads the "web" process type and runs it as the application's single
+# entry point; MaxRAMPercentage is set explicitly (matching the same gotcha
+# called out for ECS/Fargate in the Theory chapter -- a JVM that doesn't
+# respect its environment's actual memory ceiling can be OOM-killed by the
+# platform rather than managing its own heap gracefully).
+web: java -XX:MaxRAMPercentage=75.0 -jar inventory-service-1.0.0.jar --server.port=5000
