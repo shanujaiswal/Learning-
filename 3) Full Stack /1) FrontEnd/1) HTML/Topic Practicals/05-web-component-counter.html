@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!--
+  PRACTICAL 05: Web Component Counter
+  Demonstrates: Theory chapter 11 (Web Components and Custom Elements)
+
+  What this shows:
+    - A real custom element <counter-widget> registered with customElements.define()
+    - Shadow DOM (open mode) for style/markup encapsulation
+    - Observed attributes (step, start, label) reacting via attributeChangedCallback
+    - Custom events dispatched from the component (counter-change) that the
+      outer page listens to — demonstrating component -> page communication
+    - Lifecycle callbacks: connectedCallback / disconnectedCallback
+
+  How to run: open this file directly in a browser. No build step, no
+  framework — just native Custom Elements + Shadow DOM APIs.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practical 05 &mdash; Web Component Counter</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #1a1a1a; --accent: #2563eb;
+      --border: #e5e7eb; --surface: #f8fafc; --muted: #6b7280;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0f1115; --fg: #e6e6e6; --accent: #60a5fa; --border: #2a2d34; --surface: #161922; --muted: #9ca3af; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; max-width: 760px; padding: 2rem 1.25rem;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg); color: var(--fg); line-height: 1.6;
+    }
+    section {
+      border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;
+      margin-bottom: 1.5rem; background: var(--surface);
+    }
+    .widgets { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    #event-log {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.75rem 1rem; font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.85rem; max-height: 180px; overflow-y: auto; white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Web Component: &lt;counter-widget&gt;</h1>
+
+  <section aria-labelledby="widgets-heading">
+    <h2 id="widgets-heading">Three independent instances</h2>
+    <p>Each instance holds its own state inside Shadow DOM &mdash; styles don't leak in or out.</p>
+    <div class="widgets">
+      <counter-widget label="Apples" start="0" step="1"></counter-widget>
+      <counter-widget label="Tickets" start="10" step="5"></counter-widget>
+      <counter-widget label="Countdown" start="3" step="-1"></counter-widget>
+    </div>
+  </section>
+
+  <section aria-labelledby="log-heading">
+    <h2 id="log-heading">Custom Event Log</h2>
+    <p>The page listens for the <code>counter-change</code> event dispatched by each widget.</p>
+    <div id="event-log">(no events yet — click a counter's + or - button)</div>
+  </section>
+
+  <script>
+    class CounterWidget extends HTMLElement {
+      static get observedAttributes() {
+        return ['label', 'start', 'step'];
+      }
+
+      constructor() {
+        super();
+        this._count = 0;
+        this._step = 1;
+
+        const shadow = this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `
+          <style>
+            :host {
+              display: inline-flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 0.5rem;
+              padding: 1rem 1.25rem;
+              border: 1px solid #d1d5db;
+              border-radius: 10px;
+              background: Canvas;
+              color: CanvasText;
+              font-family: system-ui, sans-serif;
+              min-width: 140px;
+            }
+            .label { font-weight: 700; font-size: 0.95rem; }
+            .value { font-size: 2rem; font-weight: 800; color: #2563eb; }
+            .controls { display: flex; gap: 0.5rem; }
+            button {
+              width: 2.25rem; height: 2.25rem; border-radius: 6px; border: none;
+              background: #2563eb; color: #fff; font-size: 1.1rem; cursor: pointer;
+              display: flex; align-items: center; justify-content: center;
+            }
+            button:focus-visible { outline: 3px solid orange; outline-offset: 2px; }
+            button:active { transform: scale(0.95); }
+          </style>
+          <div class="label" part="label"></div>
+          <div class="value" part="value">0</div>
+          <div class="controls">
+            <button type="button" class="decrement" aria-label="Decrease">&minus;</button>
+            <button type="button" class="increment" aria-label="Increase">&plus;</button>
+          </div>
+        `;
+
+        this._labelEl = shadow.querySelector('.label');
+        this._valueEl = shadow.querySelector('.value');
+        shadow.querySelector('.increment').addEventListener('click', () => this._change(this._step));
+        shadow.querySelector('.decrement').addEventListener('click', () => this._change(-this._step));
+      }
+
+      connectedCallback() {
+        this._count = Number(this.getAttribute('start')) || 0;
+        this._step = Number(this.getAttribute('step')) || 1;
+        this._labelEl.textContent = this.getAttribute('label') || 'Counter';
+        this._render();
+      }
+
+      disconnectedCallback() {
+        // Cleanup hook — nothing external to release in this simple demo,
+        // but this is where you'd remove global listeners/timers.
+      }
+
+      attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'label' && this._labelEl) this._labelEl.textContent = newValue || 'Counter';
+        if (name === 'step') this._step = Number(newValue) || 1;
+        if (name === 'start' && oldValue === null) this._count = Number(newValue) || 0;
+      }
+
+      _change(delta) {
+        this._count += delta;
+        this._render();
+        this.dispatchEvent(new CustomEvent('counter-change', {
+          bubbles: true,
+          composed: true, // lets the event cross the shadow boundary
+          detail: { label: this.getAttribute('label'), value: this._count }
+        }));
+      }
+
+      _render() {
+        this._valueEl.textContent = this._count;
+      }
+    }
+
+    customElements.define('counter-widget', CounterWidget);
+
+    const log = document.getElementById('event-log');
+    document.addEventListener('counter-change', (event) => {
+      const { label, value } = event.detail;
+      const line = `[${new Date().toLocaleTimeString()}] ${label} -> ${value}`;
+      log.textContent = log.textContent.startsWith('(no events') ? line : log.textContent + '\n' + line;
+      log.scrollTop = log.scrollHeight;
+    });
+  </script>
+</body>
+</html>

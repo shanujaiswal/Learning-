@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!--
+  PRACTICAL 04: HTML5 APIs Demo
+  Demonstrates: Theory chapter 07 (HTML5 APIs and Advanced Elements)
+
+  What this shows, each in its own labeled section:
+    1. <dialog> element — open/close via the native dialog API (showModal/close)
+    2. <details>/<summary> — native disclosure widget, no JS needed
+    3. localStorage — reading and writing a persisted note across page reloads
+    4. <canvas> — a small freehand drawing pad using the 2D context
+
+  How to run: open this file directly in a browser. Everything works offline;
+  localStorage persists only within this browser profile/origin (file://).
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practical 04 &mdash; HTML5 APIs Demo</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #1a1a1a; --accent: #2563eb;
+      --border: #e5e7eb; --surface: #f8fafc; --muted: #6b7280;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0f1115; --fg: #e6e6e6; --accent: #60a5fa; --border: #2a2d34; --surface: #161922; --muted: #9ca3af; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; max-width: 800px; padding: 2rem 1.25rem;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg); color: var(--fg); line-height: 1.6;
+    }
+    section {
+      border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;
+      margin-bottom: 1.75rem; background: var(--surface);
+    }
+    h2 { margin-top: 0; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    button {
+      padding: 0.55rem 1.2rem; border: none; border-radius: 6px;
+      background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; font-size: 0.95rem;
+    }
+    button.secondary { background: var(--muted); }
+
+    dialog {
+      border: none; border-radius: 10px; padding: 1.5rem 1.75rem; max-width: 420px;
+      background: var(--bg); color: var(--fg); box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    dialog::backdrop { background: rgba(0,0,0,0.5); }
+    dialog h3 { margin-top: 0; }
+    .dialog-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+    details {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem;
+      background: var(--bg); margin-bottom: 0.6rem;
+    }
+    summary { cursor: pointer; font-weight: 600; }
+    details[open] summary { color: var(--accent); }
+
+    textarea {
+      width: 100%; min-height: 100px; padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+      color: var(--fg); font: inherit; resize: vertical;
+    }
+    .note-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; align-items: center; }
+    .save-status { color: var(--muted); font-size: 0.85rem; }
+
+    canvas {
+      border: 2px dashed var(--border); border-radius: 8px; background: var(--bg);
+      touch-action: none; cursor: crosshair; max-width: 100%;
+    }
+    .canvas-actions { margin-top: 0.75rem; display: flex; gap: 0.75rem; }
+  </style>
+</head>
+<body>
+  <h1>HTML5 APIs Demo</h1>
+
+  <!-- 1. Dialog -->
+  <section aria-labelledby="dialog-heading">
+    <h2 id="dialog-heading">1. The &lt;dialog&gt; Element</h2>
+    <p>A native modal dialog &mdash; no library required.</p>
+    <button id="open-dialog-btn">Open Confirmation Dialog</button>
+
+    <dialog id="confirm-dialog">
+      <h3>Confirm Action</h3>
+      <p>This uses <code>HTMLDialogElement.showModal()</code> and <code>close()</code>.</p>
+      <div class="dialog-actions">
+        <button class="secondary" id="cancel-dialog-btn" type="button">Cancel</button>
+        <button id="confirm-dialog-btn" type="button">Confirm</button>
+      </div>
+    </dialog>
+    <p id="dialog-result" class="save-status" aria-live="polite"></p>
+  </section>
+
+  <!-- 2. Details/Summary -->
+  <section aria-labelledby="details-heading">
+    <h2 id="details-heading">2. &lt;details&gt; / &lt;summary&gt;</h2>
+    <details>
+      <summary>What is the Constraint Validation API?</summary>
+      <p>A browser-native API (<code>checkValidity()</code>, <code>setCustomValidity()</code>, the <code>:valid</code>/<code>:invalid</code> pseudo-classes) for validating form fields without JavaScript-only logic.</p>
+    </details>
+    <details>
+      <summary>What is Shadow DOM?</summary>
+      <p>An encapsulated DOM subtree attached to an element, with styles and markup isolated from the rest of the page &mdash; the basis for Web Components.</p>
+    </details>
+    <details open>
+      <summary>This one starts open</summary>
+      <p>The <code>open</code> attribute controls initial disclosure state and can be toggled from script via the <code>toggle</code> event.</p>
+    </details>
+  </section>
+
+  <!-- 3. localStorage -->
+  <section aria-labelledby="storage-heading">
+    <h2 id="storage-heading">3. localStorage Persistence</h2>
+    <label for="note-box" style="font-weight:600; display:block; margin-bottom:0.4rem;">Your note (persists across reloads):</label>
+    <textarea id="note-box" placeholder="Type something, then reload the page..."></textarea>
+    <div class="note-actions">
+      <button id="save-note-btn" type="button">Save Note</button>
+      <button id="clear-note-btn" type="button" class="secondary">Clear Saved Note</button>
+      <span id="save-status" class="save-status"></span>
+    </div>
+  </section>
+
+  <!-- 4. Canvas -->
+  <section aria-labelledby="canvas-heading">
+    <h2 id="canvas-heading">4. &lt;canvas&gt; Drawing Pad</h2>
+    <p>Click and drag (or touch and drag) to draw.</p>
+    <canvas id="draw-canvas" width="600" height="260" aria-label="Freehand drawing canvas"></canvas>
+    <div class="canvas-actions">
+      <button id="clear-canvas-btn" type="button" class="secondary">Clear Canvas</button>
+    </div>
+  </section>
+
+  <script>
+    // --- 1. Dialog ---
+    const dialog = document.getElementById('confirm-dialog');
+    const dialogResult = document.getElementById('dialog-result');
+    document.getElementById('open-dialog-btn').addEventListener('click', () => dialog.showModal());
+    document.getElementById('cancel-dialog-btn').addEventListener('click', () => dialog.close('cancelled'));
+    document.getElementById('confirm-dialog-btn').addEventListener('click', () => dialog.close('confirmed'));
+    dialog.addEventListener('close', () => {
+      dialogResult.textContent = `Dialog closed with returnValue: "${dialog.returnValue}"`;
+    });
+
+    // --- 3. localStorage ---
+    const STORAGE_KEY = 'practical04.note';
+    const noteBox = document.getElementById('note-box');
+    const saveStatus = document.getElementById('save-status');
+
+    noteBox.value = localStorage.getItem(STORAGE_KEY) || '';
+
+    document.getElementById('save-note-btn').addEventListener('click', () => {
+      localStorage.setItem(STORAGE_KEY, noteBox.value);
+      saveStatus.textContent = 'Saved at ' + new Date().toLocaleTimeString();
+    });
+    document.getElementById('clear-note-btn').addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      noteBox.value = '';
+      saveStatus.textContent = 'Cleared.';
+    });
+
+    // --- 4. Canvas drawing pad ---
+    const canvas = document.getElementById('draw-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#2563eb';
+
+    function getPos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const point = evt.touches ? evt.touches[0] : evt;
+      return {
+        x: (point.clientX - rect.left) * (canvas.width / rect.width),
+        y: (point.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function startDraw(evt) {
+      isDrawing = true;
+      const { x, y } = getPos(evt);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+    function draw(evt) {
+      if (!isDrawing) return;
+      const { x, y } = getPos(evt);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      evt.preventDefault();
+    }
+    function stopDraw() { isDrawing = false; }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDraw);
+
+    document.getElementById('clear-canvas-btn').addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+  </script>
+</body>
+</html>

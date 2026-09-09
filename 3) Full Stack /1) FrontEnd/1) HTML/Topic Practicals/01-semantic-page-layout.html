@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!--
+  PRACTICAL 01: Semantic Page Layout
+  Demonstrates: Theory chapters 02 (Document Structure & Basics) and 03 (Text Formatting & Semantic Elements)
+
+  What this shows:
+    - Correct HTML5 document skeleton (doctype, lang, meta viewport/charset)
+    - Semantic sectioning elements: header, nav, main, section, article, aside, footer
+    - A correct, single-h1 heading hierarchy (h1 -> h2 -> h3, no skipped levels)
+    - Text-level semantic elements: <strong>, <em>, <mark>, <time>, <abbr>, <blockquote>, <cite>, <code>
+    - Safe external links using rel="noopener noreferrer" with target="_blank"
+
+  How to run: open this file directly in any browser. No build step needed.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practical 01 &mdash; Semantic Page Layout</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #1a1a1a;
+      --accent: #2563eb;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --surface: #f8fafc;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --fg: #e6e6e6;
+        --accent: #60a5fa;
+        --muted: #9ca3af;
+        --border: #2a2d34;
+        --surface: #161922;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+    }
+    a { color: var(--accent); }
+    a:focus-visible, button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    header.site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    nav ul {
+      display: flex;
+      gap: 1.25rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    nav a { text-decoration: none; font-weight: 600; }
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    main section { margin-bottom: 2.5rem; }
+    article {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      background: var(--surface);
+    }
+    article h3 { margin-top: 0; }
+    aside {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      align-self: start;
+    }
+    aside h2 { margin-top: 0; font-size: 1.05rem; }
+    mark { background: #fde68a; color: #1a1a1a; padding: 0 0.2em; border-radius: 3px; }
+    blockquote {
+      border-left: 4px solid var(--accent);
+      margin: 1rem 0;
+      padding: 0.25rem 1rem;
+      color: var(--muted);
+    }
+    code {
+      background: var(--border);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    footer.site-footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <p style="margin:0; font-weight:700; font-size:1.1rem;">Semantic City Blog</p>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="#articles">Articles</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <main>
+      <h1>Understanding Semantic HTML</h1>
+      <p>
+        This page is a practical demonstration of <strong>semantic sectioning
+        elements</strong> and a clean heading outline. It was last updated on
+        <time datetime="2026-08-10">10 August 2026</time>.
+      </p>
+
+      <section id="articles" aria-labelledby="articles-heading">
+        <h2 id="articles-heading">Latest Articles</h2>
+
+        <article>
+          <h3>Why <code>&lt;section&gt;</code> Is Not a Div</h3>
+          <p>
+            A <code>&lt;section&gt;</code> groups thematically related content and,
+            ideally, starts with its own heading. Unlike a generic
+            <code>&lt;div&gt;</code>, it carries semantic meaning that assistive
+            technology can use to build a document outline.
+          </p>
+          <blockquote>
+            <p>&ldquo;Semantics give structure meaning &mdash; not just appearance.&rdquo;</p>
+            <cite>&mdash; <abbr title="World Wide Web Consortium">W3C</abbr> HTML Living Standard</cite>
+          </blockquote>
+        </article>
+
+        <article>
+          <h3>Articles vs. Sections</h3>
+          <p>
+            Use <code>&lt;article&gt;</code> for content that could stand alone
+            and be syndicated on its own (a blog post, a news story, a comment).
+            Use <code>&lt;section&gt;</code> for thematic grouping inside a page.
+            <mark>The distinction matters for screen reader navigation.</mark>
+          </p>
+        </article>
+      </section>
+
+      <section id="about" aria-labelledby="about-heading">
+        <h2 id="about-heading">About This Practical</h2>
+        <p>
+          Read more on the official reference at
+          <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element"
+             target="_blank" rel="noopener noreferrer">MDN HTML Elements</a>
+          (opens in a new tab &mdash; note the <code>rel="noopener noreferrer"</code>
+          used for safe external links).
+        </p>
+      </section>
+    </main>
+
+    <aside aria-labelledby="aside-heading">
+      <h2 id="aside-heading">Quick Facts</h2>
+      <ul>
+        <li>One <code>&lt;h1&gt;</code> per page</li>
+        <li>No skipped heading levels</li>
+        <li><code>&lt;nav&gt;</code> for major link groups only</li>
+        <li><code>&lt;aside&gt;</code> for tangential content</li>
+      </ul>
+    </aside>
+  </div>
+
+  <footer class="site-footer" id="contact">
+    <p>&copy; 2026 Semantic City Blog. Built for practice, not production.</p>
+  </footer>
+
+</body>
+</html>

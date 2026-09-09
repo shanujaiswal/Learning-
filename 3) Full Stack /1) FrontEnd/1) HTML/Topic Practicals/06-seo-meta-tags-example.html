@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!--
+  PRACTICAL 06: SEO Meta Tags and Open Graph
+  Demonstrates: Theory chapter 10 (SEO Meta Tags and Open Graph)
+
+  What this shows in the <head>:
+    - title + meta description tuned for search snippets
+    - <link rel="canonical"> to avoid duplicate-content issues
+    - robots meta directives
+    - Open Graph tags (og:*) for Facebook/LinkedIn-style link previews
+    - Twitter Card tags (twitter:*)
+    - JSON-LD structured data (schema.org Product) for rich search results
+
+  How to run: open this file directly in a browser, then "View Page Source"
+  to inspect the <head>. Paste the JSON-LD block into Google's Rich Results
+  Test to validate it in a real SEO workflow.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Core SEO tags -->
+  <title>TrailRunner Pro Hiking Boots &mdash; Waterproof, All-Terrain | TrekGear</title>
+  <meta name="description" content="TrailRunner Pro hiking boots: waterproof membrane, all-terrain grip, and all-day comfort. Free shipping and 30-day returns at TrekGear." />
+  <link rel="canonical" href="https://www.example-trekgear.test/products/trailrunner-pro" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="TrekGear" />
+
+  <!-- Open Graph (Facebook, LinkedIn, WhatsApp previews) -->
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content="TrailRunner Pro Hiking Boots &mdash; Waterproof, All-Terrain" />
+  <meta property="og:description" content="Waterproof membrane, all-terrain grip, all-day comfort. Free shipping and 30-day returns." />
+  <meta property="og:image" content="https://www.example-trekgear.test/images/trailrunner-pro-1200x630.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://www.example-trekgear.test/products/trailrunner-pro" />
+  <meta property="og:site_name" content="TrekGear" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TrailRunner Pro Hiking Boots" />
+  <meta name="twitter:description" content="Waterproof membrane, all-terrain grip, all-day comfort." />
+  <meta name="twitter:image" content="https://www.example-trekgear.test/images/trailrunner-pro-1200x630.jpg" />
+  <meta name="twitter:site" content="@trekgear" />
+
+  <!-- JSON-LD structured data for rich search results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "TrailRunner Pro Hiking Boots",
+    "image": "https://www.example-trekgear.test/images/trailrunner-pro-1200x630.jpg",
+    "description": "Waterproof membrane, all-terrain grip, and all-day comfort for serious hikers.",
+    "sku": "TRP-2026-BLK",
+    "brand": {
+      "@type": "Brand",
+      "name": "TrekGear"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://www.example-trekgear.test/products/trailrunner-pro",
+      "priceCurrency": "USD",
+      "price": "129.99",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.6",
+      "reviewCount": "482"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #1a1a1a; --accent: #b45309;
+      --border: #e5e7eb; --surface: #f8fafc; --muted: #6b7280;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0f1115; --fg: #e6e6e6; --accent: #f59e0b; --border: #2a2d34; --surface: #161922; --muted: #9ca3af; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; max-width: 760px; padding: 2rem 1.25rem;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg); color: var(--fg); line-height: 1.6;
+    }
+    .price { font-size: 1.75rem; font-weight: 800; color: var(--accent); }
+    .card {
+      border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;
+      background: var(--surface); margin-top: 1rem;
+    }
+    code { background: var(--border); padding: 0.15em 0.4em; border-radius: 4px; }
+    ul { padding-left: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>TrailRunner Pro Hiking Boots</h1>
+  <p class="price">$129.99 &middot; In Stock &middot; ★ 4.6 (482 reviews)</p>
+
+  <div class="card">
+    <p>
+      Waterproof membrane, all-terrain grip, and all-day comfort &mdash;
+      built for long trails and unpredictable weather.
+    </p>
+    <ul>
+      <li>Fully waterproof, breathable membrane</li>
+      <li>Reinforced toe cap and ankle support</li>
+      <li>Vibram all-terrain outsole</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>What's in the &lt;head&gt;</h2>
+    <p>
+      View source to see the full block: <code>&lt;title&gt;</code>,
+      <code>meta description</code>, <code>rel="canonical"</code>,
+      Open Graph (<code>og:*</code>) tags, Twitter Card
+      (<code>twitter:*</code>) tags, and a JSON-LD
+      <code>Product</code> schema for rich search snippets.
+    </p>
+  </div>
+</body>
+</html>

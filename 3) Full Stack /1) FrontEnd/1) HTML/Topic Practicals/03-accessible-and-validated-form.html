@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<!--
+  PRACTICAL 03: Accessible and Validated Signup Form
+  Demonstrates: Theory chapter 09 (Advanced Form Validation) and part of chapter 08 (Accessibility & ARIA)
+
+  What this shows:
+    - required / pattern / minlength built-in constraint attributes
+    - The Constraint Validation API used from inline <script> for a custom
+      cross-field rule (password === confirm password) via setCustomValidity()
+    - Proper <label for="..."> association for every control (no bare inputs)
+    - aria-describedby linking inputs to their helper/error text
+    - Visible :valid / :invalid / :focus-visible styling
+    - A live, polite ARIA status region announcing the submit result
+
+  How to run: open this file directly in a browser and try submitting with
+  empty/invalid fields, then with a mismatched password confirmation.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practical 03 &mdash; Accessible &amp; Validated Signup Form</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #1a1a1a; --accent: #2563eb;
+      --border: #d1d5db; --surface: #f8fafc; --muted: #6b7280;
+      --ok: #15803d; --err: #b91c1c;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115; --fg: #e6e6e6; --accent: #60a5fa;
+        --border: #3a3d45; --surface: #161922; --muted: #9ca3af;
+        --ok: #4ade80; --err: #f87171;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; max-width: 560px; padding: 2rem 1.25rem;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg); color: var(--fg); line-height: 1.6;
+    }
+    h1 { font-size: 1.6rem; }
+    form {
+      display: grid; gap: 1.4rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;
+    }
+    .field { display: grid; gap: 0.35rem; }
+    label { font-weight: 600; font-size: 0.92rem; }
+    .required-mark { color: var(--err); }
+    input {
+      padding: 0.6rem 0.75rem; border: 2px solid var(--border);
+      border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 1rem;
+      transition: border-color 0.15s ease;
+    }
+    .hint { font-size: 0.82rem; color: var(--muted); }
+    .error-text {
+      font-size: 0.82rem; color: var(--err); min-height: 1.1em; margin: 0;
+    }
+
+    /* Only show validity color once the user has interacted (avoids "red on load") */
+    input:focus-visible {
+      outline: 3px solid var(--accent); outline-offset: 1px;
+    }
+    form.was-validated input:valid {
+      border-color: var(--ok);
+    }
+    form.was-validated input:invalid {
+      border-color: var(--err);
+    }
+    input:invalid ~ .error-text::before { content: ""; }
+
+    button {
+      padding: 0.7rem 1.4rem; border: none; border-radius: 6px;
+      background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; font-size: 1rem;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    #form-status {
+      border-radius: 8px; padding: 0.75rem 1rem; font-weight: 600; display: none;
+    }
+    #form-status.success { display: block; background: rgba(21,128,61,0.12); color: var(--ok); }
+    #form-status.failure { display: block; background: rgba(185,28,28,0.12); color: var(--err); }
+  </style>
+</head>
+<body>
+  <h1>Create Your Account</h1>
+  <p class="hint">Fields marked <span class="required-mark">*</span> are required. Validation runs on submit and updates live as you fix each field.</p>
+
+  <form id="signup-form" novalidate>
+    <div class="field">
+      <label for="username">Username <span class="required-mark">*</span></label>
+      <input
+        type="text" id="username" name="username" required minlength="4" maxlength="20"
+        pattern="[A-Za-z0-9_]+"
+        aria-describedby="username-hint username-error" />
+      <p id="username-hint" class="hint">4&ndash;20 characters: letters, numbers, underscore only.</p>
+      <p id="username-error" class="error-text" role="alert"></p>
+    </div>
+
+    <div class="field">
+      <label for="email">Email <span class="required-mark">*</span></label>
+      <input type="email" id="email" name="email" required aria-describedby="email-error" autocomplete="email" />
+      <p id="email-error" class="error-text" role="alert"></p>
+    </div>
+
+    <div class="field">
+      <label for="password">Password <span class="required-mark">*</span></label>
+      <input
+        type="password" id="password" name="password" required minlength="8"
+        pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+        aria-describedby="password-hint password-error" autocomplete="new-password" />
+      <p id="password-hint" class="hint">At least 8 characters, with at least one letter and one number.</p>
+      <p id="password-error" class="error-text" role="alert"></p>
+    </div>
+
+    <div class="field">
+      <label for="confirm-password">Confirm Password <span class="required-mark">*</span></label>
+      <input
+        type="password" id="confirm-password" name="confirmPassword" required
+        aria-describedby="confirm-error" autocomplete="new-password" />
+      <p id="confirm-error" class="error-text" role="alert"></p>
+    </div>
+
+    <button type="submit">Create Account</button>
+
+    <div id="form-status" role="status" aria-live="polite"></div>
+  </form>
+
+  <script>
+    const form = document.getElementById('signup-form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm-password');
+    const status = document.getElementById('form-status');
+
+    const errorMessages = {
+      username: 'Use 4-20 letters, numbers, or underscores only.',
+      email: 'Enter a valid email address, e.g. name@example.com.',
+      password: 'Password needs 8+ characters with a letter and a number.',
+      confirmPassword: 'This must exactly match the password above.'
+    };
+
+    function showFieldError(input) {
+      const errorEl = document.getElementById(
+        input.id === 'confirm-password' ? 'confirm-error' : `${input.id}-error`
+      );
+      if (!errorEl) return;
+      errorEl.textContent = input.validity.valid ? '' : (errorMessages[input.name] || input.validationMessage);
+    }
+
+    // Cross-field validation using the Constraint Validation API:
+    // confirmPassword is only "valid" if it matches password exactly.
+    function checkPasswordsMatch() {
+      if (confirmPassword.value && confirmPassword.value !== password.value) {
+        confirmPassword.setCustomValidity('Passwords do not match.');
+      } else {
+        confirmPassword.setCustomValidity('');
+      }
+      showFieldError(confirmPassword);
+    }
+
+    password.addEventListener('input', checkPasswordsMatch);
+    confirmPassword.addEventListener('input', checkPasswordsMatch);
+
+    form.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('input', () => showFieldError(input));
+      input.addEventListener('blur', () => showFieldError(input));
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      form.classList.add('was-validated');
+      checkPasswordsMatch();
+
+      const isValid = form.checkValidity();
+      form.querySelectorAll('input').forEach(showFieldError);
+
+      if (isValid) {
+        status.textContent = 'Account details look good! (Demo only — no data was sent anywhere.)';
+        status.className = 'success';
+        // In a real app, submit via fetch()/FormData here.
+      } else {
+        status.textContent = 'Please fix the highlighted fields above and try again.';
+        status.className = 'failure';
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) firstInvalid.focus();
+      }
+    });
+  </script>
+</body>
+</html>
