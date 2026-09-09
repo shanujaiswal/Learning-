@@ -1,0 +1,96 @@
+# =============================================================================
+# 03 - REAL GITHUB ACTIONS CI/CD WORKFLOW EXAMPLE
+# Companion to: "03 GitHub Platform Collaboration and CI-CD.md"
+#
+# This is exactly how this file would appear at:
+#   .github/workflows/ci.yml
+# in a real Node.js repository. Runs tests on every push/PR, and deploys
+# ONLY when a merge lands on main.
+#
+# See "03-github-cicd-workflow-example.md" for a section-by-section explanation.
+# =============================================================================
+
+name: CI/CD
+
+# --- WHEN this workflow runs -------------------------------------------------
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# --- Permissions this workflow's default GITHUB_TOKEN gets -----------------
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # JOB 1: build-and-test -- runs on EVERY push and EVERY pull request.
+  # This is the "Continuous Integration" half.
+  # ---------------------------------------------------------------------------
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]   # run the whole job once per Node version
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        # npm ci (not npm install) -- uses package-lock.json exactly as-is,
+        # fails if it's out of sync, and gives fully reproducible CI installs.
+
+      - name: Run linter
+        run: npm run lint --if-present
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build --if-present
+
+  # ---------------------------------------------------------------------------
+  # JOB 2: deploy -- runs ONLY after build-and-test succeeds, AND only on
+  # an actual push to main (i.e. a merge landed on main) -- never on a PR,
+  # and never if tests failed. This is the "Continuous Deployment" half.
+  # ---------------------------------------------------------------------------
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for production
+        run: npm run build
+
+      - name: Deploy
+        run: echo "Deploying build output to production host..."
+        # In a real project this step is replaced by a real deploy action,
+        # e.g. uses: peaceiris/actions-gh-pages@v3, or a cloud provider's
+        # official deploy action, or an `aws s3 sync` / `rsync` command
+        # authenticated via a secret stored in Repository Settings > Secrets.
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
