@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>02 - Grid Layout and Areas</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+    color: #1b2430;
+  }
+  h1 { text-align: center; padding: 1.5rem 1rem 0; }
+  p.note { text-align: center; color: #566; font-size: 0.9rem; margin-top: 0; }
+
+  /* =========================================================
+     PAGE LAYOUT with named grid-template-areas
+     Defines a full header/sidebar/main/footer layout by name
+     instead of counting rows/columns manually.
+     ========================================================= */
+  .page-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;      /* sidebar fixed, main flexible */
+    grid-template-rows: auto 1fr auto;     /* header/footer hug content, main fills space */
+    grid-template-areas:
+      "header header"
+      "sidebar main"
+      "footer footer";
+    gap: 0.75rem;
+    min-height: 480px;
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0.75rem;
+    background: #dfe7ef;
+    border-radius: 10px;
+  }
+  .page-layout > * { border-radius: 8px; padding: 1rem; color: #fff; }
+  .g-header { grid-area: header; background: #364fc7; }        /* placed by area name */
+  .g-sidebar { grid-area: sidebar; background: #2f9e44; }
+  .g-main   { grid-area: main; background: #ffffff; color: #1b2430; }
+  .g-main h3 { color: #364fc7; }
+  .g-footer { grid-area: footer; background: #495057; text-align: center; }
+
+  /* Mobile redefinition of the SAME named areas -> stacked layout */
+  @media (max-width: 640px) {
+    .page-layout {
+      grid-template-columns: 1fr;                 /* single column */
+      grid-template-rows: auto auto auto auto;
+      grid-template-areas:
+        "header"
+        "main"
+        "sidebar"
+        "footer";                                  /* reordered: main before sidebar on mobile */
+    }
+  }
+
+  /* =========================================================
+     RESPONSIVE IMAGE GALLERY
+     repeat(auto-fit, minmax(200px,1fr)) creates as many equal
+     columns as fit, each at least 200px wide - no media query needed.
+     ========================================================= */
+  .gallery-wrap {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 0.75rem;
+  }
+  .gallery-wrap h2 { color: #2d6cdf; }
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .gallery figure {
+    margin: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .gallery .thumb {
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .gallery figcaption {
+    background: #fff;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  .t1 { background: linear-gradient(135deg,#f76707,#ffa94d); }
+  .t2 { background: linear-gradient(135deg,#1971c2,#4dabf7); }
+  .t3 { background: linear-gradient(135deg,#2f9e44,#69db7c); }
+  .t4 { background: linear-gradient(135deg,#c2255c,#f783ac); }
+  .t5 { background: linear-gradient(135deg,#7048e8,#b197fc); }
+  .t6 { background: linear-gradient(135deg,#e8590c,#ffc078); }
+</style>
+</head>
+<body>
+  <h1>Grid Layout and Areas</h1>
+  <p class="note">Covers Theory chapter: <strong>06 Grid</strong>. Resize below 640px to see the page layout re-flow via grid-template-areas.</p>
+
+  <div class="page-layout">
+    <header class="g-header">Header</header>
+    <aside class="g-sidebar">Sidebar<br><small>Navigation links go here</small></aside>
+    <main class="g-main">
+      <h3>Main Content Area</h3>
+      <p>This grid uses named <code>grid-template-areas</code> for header, sidebar, main and footer. On small screens a media query redefines the SAME area names into a single-column, reordered stack.</p>
+    </main>
+    <footer class="g-footer">Footer &copy; 2026</footer>
+  </div>
+
+  <div class="gallery-wrap">
+    <h2>Responsive Image Gallery (auto-fit / minmax)</h2>
+    <div class="gallery">
+      <figure><div class="thumb t1">Photo 1</div><figcaption>Sunset</figcaption></figure>
+      <figure><div class="thumb t2">Photo 2</div><figcaption>Ocean</figcaption></figure>
+      <figure><div class="thumb t3">Photo 3</div><figcaption>Forest</figcaption></figure>
+      <figure><div class="thumb t4">Photo 4</div><figcaption>Flowers</figcaption></figure>
+      <figure><div class="thumb t5">Photo 5</div><figcaption>Sky</figcaption></figure>
+      <figure><div class="thumb t6">Photo 6</div><figcaption>Desert</figcaption></figure>
+    </div>
+  </div>
+</body>
+</html>

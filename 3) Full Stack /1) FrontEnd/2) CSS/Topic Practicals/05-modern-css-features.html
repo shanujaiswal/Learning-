@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>05 - Modern CSS Features</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+    color: #1b2430;
+  }
+  h1 { text-align: center; padding: 1.5rem 1rem 0; }
+  p.note { text-align: center; color: #566; font-size: 0.9rem; }
+  section {
+    margin: 2rem auto;
+    max-width: 900px;
+    padding: 1.5rem;
+    background: #fff;
+    border: 1px solid #e0e4e8;
+    border-radius: 10px;
+  }
+  section h2 { margin-top: 0; color: #2d6cdf; }
+
+  /* =========================================================
+     :has() - the "parent selector"
+     Style a form field's wrapper differently depending on
+     what's INSIDE it (its descendant), which was impossible
+     in CSS before :has().
+     ========================================================= */
+  .field {
+    border: 2px solid #ced4da;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.25s ease, background 0.25s ease;
+  }
+  .field:has(input:invalid) {         /* wrapper reacts to an invalid input inside it */
+    border-color: #e03131;
+    background: #fff5f5;
+  }
+  .field:has(input:valid) {
+    border-color: #2f9e44;
+    background: #f4fce3;
+  }
+  .field label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; }
+  .field input { width: 100%; padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
+
+  .card-list:has(.card.featured) {    /* container changes style if it contains a "featured" card */
+    outline: 3px dashed #f08c00;
+    outline-offset: 6px;
+  }
+
+  /* =========================================================
+     :is() and :where() - grouping selectors
+     :is() lets you group a list of selectors into one rule.
+     :where() does the same but always contributes ZERO
+     specificity, so it's easy to override later.
+     ========================================================= */
+  :is(.card-list, .field-group) h3 {   /* one rule instead of repeating ".card-list h3, .field-group h3" */
+    color: #364fc7;
+    margin-top: 0;
+  }
+  :where(.card-list, .field-group) p { /* :where() -> zero specificity, easy for other rules to override */
+    color: #495057;
+    font-size: 0.9rem;
+  }
+
+  /* =========================================================
+     NATIVE CSS NESTING
+     Nest related selectors inside their parent instead of
+     repeating the parent selector for every rule.
+     ========================================================= */
+  .card-list {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    & .card {                         /* nested descendant selector */
+      flex: 1 1 200px;
+      background: #edf2ff;
+      border: 1px solid #c8d6ff;
+      border-radius: 8px;
+      padding: 1rem;
+
+      &:hover {                       /* nested pseudo-class */
+        box-shadow: 0 6px 14px rgba(54,79,199,0.25);
+      }
+
+      &.featured {                    /* nested compound class */
+        background: #fff9db;
+        border-color: #ffd43b;
+      }
+    }
+  }
+
+  /* =========================================================
+     CONTAINER QUERIES (@container)
+     container-type: inline-size turns an element into a query
+     container; children then respond to ITS width, not the
+     viewport's - great for reusable components.
+     ========================================================= */
+  .container-demo {
+    container-type: inline-size;   /* this box is now a query container */
+    container-name: widget;
+    resize: horizontal;            /* drag the corner to resize and see it respond */
+    overflow: auto;
+    border: 2px dashed #adb5bd;
+    padding: 1rem;
+    max-width: 100%;
+    min-width: 180px;
+  }
+  .widget {
+    display: flex;
+    flex-direction: column;        /* default: stacked, for narrow containers */
+    gap: 0.5rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  .widget img.placeholder {
+    width: 100%;
+    height: 80px;
+    border-radius: 6px;
+    background: linear-gradient(135deg,#4dabf7,#364fc7);
+  }
+  @container widget (min-width: 400px) {   /* query the CONTAINER's width, not the viewport */
+    .widget {
+      flex-direction: row;                 /* switch to a horizontal layout once the container is wide enough */
+      align-items: center;
+    }
+    .widget img.placeholder { width: 140px; height: 100px; flex-shrink: 0; }
+  }
+
+  /* =========================================================
+     CSS CUSTOM PROPERTIES feeding a themeable component
+     Change --theme-* once and every dependent value updates.
+     ========================================================= */
+  .themed-btn {
+    --theme-color: #7048e8;
+    --theme-color-dark: #4c2889;
+    background: var(--theme-color);
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    transition: background 0.2s ease;
+  }
+  .themed-btn:hover { background: var(--theme-color-dark); }
+  .themed-btn.pink { --theme-color: #d6336c; --theme-color-dark: #a3235a; }
+  .themed-btn.green { --theme-color: #2f9e44; --theme-color-dark: #1e7431; }
+</style>
+</head>
+<body>
+  <h1>Modern CSS Features</h1>
+  <p class="note">Covers Theory chapters: <strong>10 Advanced CSS Variables and Pseudo Selectors</strong> and <strong>12 Container Queries</strong>.</p>
+
+  <section class="field-group">
+    <h2>:has() - Style a Parent by its Content</h2>
+    <p>Type in the fields; the wrapper border/background reacts to whether the input inside is valid.</p>
+    <div class="field">
+      <label for="email">Email (try typing an invalid vs valid email)</label>
+      <input type="email" id="email" placeholder="name@example.com" required />
+    </div>
+    <div class="field">
+      <label for="age">Number 1-10</label>
+      <input type="number" id="age" min="1" max="10" placeholder="e.g. 5" required />
+    </div>
+  </section>
+
+  <section>
+    <h2>:is() / :where() + Native Nesting</h2>
+    <p class="note">Hover the cards. The "Featured" card also demonstrates :has() on the list wrapper (dashed outline appears because the list contains a .featured card).</p>
+    <div class="card-list">
+      <div class="card"><h3>Standard</h3><p>A regular card using nested &amp; selectors.</p></div>
+      <div class="card featured"><h3>Featured</h3><p>Nested &.featured modifier + triggers :has() on parent.</p></div>
+      <div class="card"><h3>Another</h3><p>Grouped with :is()/:where() for shared heading/paragraph styling.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Container Queries (@container)</h2>
+    <p class="note">Drag the bottom-right corner of the dashed box to resize it. The widget inside switches from stacked to horizontal once the CONTAINER (not the viewport) passes 400px.</p>
+    <div class="container-demo">
+      <div class="widget">
+        <div class="placeholder-wrap"><div class="placeholder" style="width:100%;height:80px;border-radius:6px;background:linear-gradient(135deg,#4dabf7,#364fc7);"></div></div>
+        <div>
+          <h3 style="margin:0 0 0.25rem;color:#364fc7;">Responsive Widget</h3>
+          <p style="margin:0;font-size:0.9rem;">This layout responds to its CONTAINER's width via @container, independent of the browser viewport.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Custom Properties Feeding a Themeable Component</h2>
+    <p>Each button only overrides <code>--theme-color</code>/<code>--theme-color-dark</code>; every other rule (padding, radius, hover transition) is shared.</p>
+    <button class="themed-btn">Default</button>
+    <button class="themed-btn pink">Pink Theme</button>
+    <button class="themed-btn green">Green Theme</button>
+  </section>
+</body>
+</html>

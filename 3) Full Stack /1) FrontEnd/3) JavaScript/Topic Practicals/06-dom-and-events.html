@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!--
+  06-dom-and-events.html
+  HOW TO RUN: open this file directly in a browser (double-click it, or
+  File > Open in any browser). It is a self-contained HTML page with an
+  inline <script> - no build step, no server needed. Open the browser's
+  DevTools console to see the labeled log output alongside the visible UI.
+
+  Covers (Theory folder):
+   - Chapter 7: Events / DOM
+
+  Demonstrates:
+   1. Event delegation on a dynamic list (one listener on the parent <ul>
+      handles clicks on items added/removed later, including a "remove"
+      button per item).
+   2. A debounced input search-filter over that same list.
+   3. A custom event ("item:removed") dispatched from inside the list and
+      listened to by an unrelated part of the page.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>DOM & Events Practical Demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.3rem; }
+  section { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+  input { padding: 0.4rem; width: 100%; box-sizing: border-box; margin-bottom: 0.75rem; }
+  ul#item-list { list-style: none; padding: 0; margin: 0; }
+  ul#item-list li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.5rem; border-bottom: 1px solid #eee;
+  }
+  ul#item-list li.hidden { display: none; }
+  button.remove-btn { background: #e55; color: white; border: none; border-radius: 4px; padding: 0.25rem 0.6rem; cursor: pointer; }
+  button#add-item-btn { padding: 0.4rem 0.8rem; cursor: pointer; }
+  #log { font-family: monospace; font-size: 0.85rem; background: #111; color: #0f0; padding: 0.75rem; border-radius: 6px; max-height: 200px; overflow-y: auto; }
+  #log div { margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<h1>DOM &amp; Events Practical Demo</h1>
+
+<section>
+  <h2>1 &amp; 2: Event delegation + debounced search filter</h2>
+  <input id="search-input" type="text" placeholder="Type to filter items (debounced 300ms)..." />
+  <button id="add-item-btn" type="button">Add random item</button>
+  <ul id="item-list">
+    <li data-name="Apple">Apple <button class="remove-btn">Remove</button></li>
+    <li data-name="Banana">Banana <button class="remove-btn">Remove</button></li>
+    <li data-name="Cherry">Cherry <button class="remove-btn">Remove</button></li>
+    <li data-name="Date">Date <button class="remove-btn">Remove</button></li>
+  </ul>
+</section>
+
+<section>
+  <h2>3: Custom event listener output</h2>
+  <p>This box updates only via a custom <code>item:removed</code> event dispatched from the list above - it has no direct reference to the list's remove buttons.</p>
+  <div id="removed-summary">No items removed yet.</div>
+</section>
+
+<section>
+  <h2>Console-style log (also printed to DevTools console)</h2>
+  <div id="log"></div>
+</section>
+
+<script>
+  "use strict";
+
+  // A tiny on-page logger that mirrors console.log, so the demo is visible
+  // even without opening DevTools.
+  const logEl = document.getElementById("log");
+  function log(label, message) {
+    console.log(`[${label}] ${message}`);
+    const line = document.createElement("div");
+    line.textContent = `[${label}] ${message}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  const itemList = document.getElementById("item-list");
+  const addItemBtn = document.getElementById("add-item-btn");
+  const searchInput = document.getElementById("search-input");
+  const removedSummaryEl = document.getElementById("removed-summary");
+
+  // =========================================================================
+  // PART 1: Event delegation.
+  // Instead of attaching a "remove" click listener to every <li> (which would
+  // also need re-attaching for every dynamically added item), we attach ONE
+  // listener to the parent <ul> and inspect event.target to see what was
+  // actually clicked. This works for items added long after page load too.
+  // =========================================================================
+  let removedCount = 0;
+
+  itemList.addEventListener("click", (event) => {
+    const removeBtn = event.target.closest(".remove-btn");
+    if (!removeBtn) return; // click was on something else inside the list - ignore
+
+    const listItem = removeBtn.closest("li");
+    const itemName = listItem.dataset.name;
+
+    log("delegation", `Remove clicked for "${itemName}" (handled by ONE parent listener, not a per-item one)`);
+
+    // Dispatch a custom event BEFORE removing the element, carrying data via `detail`.
+    const removedEvent = new CustomEvent("item:removed", {
+      detail: { name: itemName, removedAt: new Date().toISOString() },
+      bubbles: true,
+    });
+    listItem.dispatchEvent(removedEvent);
+
+    listItem.remove();
+  });
+
+  const FRUITS = ["Elderberry", "Fig", "Grape", "Honeydew", "Kiwi", "Lemon", "Mango"];
+  let fruitIndex = 0;
+
+  addItemBtn.addEventListener("click", () => {
+    const name = FRUITS[fruitIndex % FRUITS.length];
+    fruitIndex++;
+    const li = document.createElement("li");
+    li.dataset.name = name;
+    li.innerHTML = `${name} <button class="remove-btn">Remove</button>`;
+    itemList.appendChild(li);
+    log("delegation", `Added "${name}" dynamically - no new listener needed, delegation covers it`);
+  });
+
+  // =========================================================================
+  // PART 2: Debounced input search-filter.
+  // Filtering runs only 300ms after the user STOPS typing, not on every
+  // keystroke - avoids expensive re-filtering on every single character.
+  // =========================================================================
+  function debounce(fn, delayMs) {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delayMs);
+    };
+  }
+
+  function filterItems(query) {
+    const normalized = query.trim().toLowerCase();
+    const items = itemList.querySelectorAll("li");
+    let visibleCount = 0;
+
+    items.forEach((li) => {
+      const matches = li.dataset.name.toLowerCase().includes(normalized);
+      li.classList.toggle("hidden", !matches);
+      if (matches) visibleCount++;
+    });
+
+    log("debounce-filter", `Filter applied for "${query}" -> ${visibleCount}/${items.length} items visible`);
+  }
+
+  const debouncedFilter = debounce(filterItems, 300);
+
+  searchInput.addEventListener("input", (event) => {
+    debouncedFilter(event.target.value);
+  });
+
+  // =========================================================================
+  // PART 3: Custom event, listened to by an unrelated part of the page.
+  // The "removed summary" box below has zero knowledge of the list's
+  // internals - it only listens for the "item:removed" custom event
+  // bubbling up to `document`, decoupling the two pieces of UI.
+  // =========================================================================
+  document.addEventListener("item:removed", (event) => {
+    removedCount++;
+    const { name, removedAt } = event.detail;
+    removedSummaryEl.textContent =
+      `Removed ${removedCount} item(s) so far. Most recent: "${name}" at ${removedAt}`;
+    log("custom-event", `Unrelated widget reacted to item:removed for "${name}" via event.detail`);
+  });
+
+  log("init", "Page ready. Try: typing in the search box, clicking Remove, and adding new items.");
+</script>
+
+</body>
+</html>

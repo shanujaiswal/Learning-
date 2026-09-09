@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>06 - BEM Naming Example</title>
+<style>
+  /*
+    BEM = Block Element Modifier
+    ------------------------------------------------------------
+    Block:     the standalone component root      -> .card
+    Element:   a part of that block                -> .card__title, .card__body
+                naming pattern: block__element
+    Modifier:  a variant/state of a block/element   -> .card--featured, .card__badge--sale
+                naming pattern: block--modifier or block__element--modifier
+
+    Rules followed in this file:
+    - Every class starts with the block name "card" (flat, no nesting-based selectors).
+    - Elements are always "card__something" - never "card .something" or "card > .x".
+    - Modifiers are always additive: base class stays, modifier class is added alongside it,
+      e.g. class="card__badge card__badge--sale". This lets one element carry multiple modifiers.
+    - No selector ever depends on HTML nesting depth or tag names - purely class-based,
+      which is the whole point of BEM: components can be moved/reused without breaking styles.
+  */
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+    color: #1b2430;
+    padding: 2rem 1rem;
+  }
+  h1 { text-align: center; }
+  p.note { text-align: center; color: #566; font-size: 0.9rem; }
+
+  .card-grid {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  /* ===== BLOCK: .card ===== */
+  .card {
+    flex: 1 1 280px;
+    max-width: 300px;
+    background: #ffffff;
+    border: 1px solid #e0e4e8;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  /* ===== MODIFIER on the block: .card--featured ===== */
+  /* A variant of the whole block - extra border + glow, nothing else changes structurally */
+  .card--featured {
+    border: 2px solid #ffd43b;
+    box-shadow: 0 4px 16px rgba(255,212,59,0.4);
+  }
+
+  /* ===== ELEMENT: .card__media ===== */
+  .card__media {
+    height: 140px;
+    background: linear-gradient(135deg,#4dabf7,#364fc7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    position: relative;
+  }
+  .card--featured .card__media {          /* still one selector per BEM class, combined via descendant only for the SAME block */
+    background: linear-gradient(135deg,#f76707,#ffd43b);
+  }
+
+  /* ===== ELEMENT: .card__badge, with its own MODIFIER .card__badge--sale ===== */
+  .card__badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #495057;
+    color: #fff;
+  }
+  .card__badge--sale {                     /* element+modifier: block__element--modifier */
+    background: #e03131;
+  }
+  .card__badge--new {
+    background: #2f9e44;
+  }
+
+  /* ===== ELEMENT: .card__body ===== */
+  .card__body {
+    padding: 1rem;
+  }
+
+  /* ===== ELEMENT: .card__title ===== */
+  .card__title {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+    color: #1b2430;
+  }
+
+  /* ===== ELEMENT: .card__price, with MODIFIER .card__price--discounted ===== */
+  .card__price {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #364fc7;
+  }
+  .card__price--discounted {
+    color: #e03131;
+  }
+  .card__price-original {                  /* a related but distinct element, hyphenated name (not nested under __price) */
+    text-decoration: line-through;
+    color: #adb5bd;
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin-left: 0.4rem;
+  }
+
+  /* ===== ELEMENT: .card__desc ===== */
+  .card__desc {
+    font-size: 0.85rem;
+    color: #495057;
+    margin: 0.5rem 0 1rem;
+  }
+
+  /* ===== ELEMENT: .card__button, with MODIFIER .card__button--disabled ===== */
+  .card__button {
+    display: inline-block;
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 6px;
+    background: #364fc7;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+  }
+  .card__button--disabled {
+    background: #ced4da;
+    color: #868e96;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+  <h1>BEM Naming Example</h1>
+  <p class="note">Covers Theory chapter: <strong>11 CSS Methodologies BEM and SMACSS</strong>. Block = <code>card</code>, elements use <code>card__x</code>, modifiers use <code>--y</code>.</p>
+
+  <div class="card-grid">
+    <!-- Standard card: block + elements, no modifiers -->
+    <div class="card">
+      <div class="card__media">Standard Item</div>
+      <div class="card__body">
+        <h3 class="card__title">Wireless Mouse</h3>
+        <p class="card__desc">A comfortable ergonomic mouse for everyday use.</p>
+        <p class="card__price">$29.99</p>
+        <button class="card__button">Add to Cart</button>
+      </div>
+    </div>
+
+    <!-- Featured + on-sale card: block modifier + element modifiers combined -->
+    <div class="card card--featured">
+      <div class="card__media">
+        Featured Item
+        <span class="card__badge card__badge--sale">SALE</span>
+      </div>
+      <div class="card__body">
+        <h3 class="card__title">Mechanical Keyboard</h3>
+        <p class="card__desc">Featured product - block modifier changes border/glow, badge element modifier marks it on sale.</p>
+        <p class="card__price card__price--discounted">
+          $59.99
+          <span class="card__price-original">$89.99</span>
+        </p>
+        <button class="card__button">Add to Cart</button>
+      </div>
+    </div>
+
+    <!-- New + disabled card: another element modifier + a disabled button modifier -->
+    <div class="card">
+      <div class="card__media">
+        New Item
+        <span class="card__badge card__badge--new">NEW</span>
+      </div>
+      <div class="card__body">
+        <h3 class="card__title">Noise-Cancelling Headphones</h3>
+        <p class="card__desc">Out of stock right now - button element carries the --disabled modifier.</p>
+        <p class="card__price">$149.99</p>
+        <button class="card__button card__button--disabled">Out of Stock</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

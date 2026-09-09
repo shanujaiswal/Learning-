@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>03 - Responsive and Fluid Units</title>
+<style>
+  * { box-sizing: border-box; }
+
+  /* =========================================================
+     prefers-color-scheme: auto dark mode based on OS setting.
+     Custom properties hold the "theme" so we only redefine
+     values once, not every selector.
+     ========================================================= */
+  :root {
+    --bg: #f4f6f8;
+    --text: #1b2430;
+    --card-bg: #ffffff;
+    --accent: #2d6cdf;
+    --border: #e0e4e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --text: #e8ecf1;
+      --card-bg: #1e232b;
+      --accent: #74a3ff;
+      --border: #2a313c;
+    }
+  }
+  /* Manual override: a `data-theme="dark"` attribute on <html> wins over the OS preference */
+  html[data-theme="dark"] {
+    --bg: #14171c;
+    --text: #e8ecf1;
+    --card-bg: #1e232b;
+    --accent: #74a3ff;
+    --border: #2a313c;
+  }
+  html[data-theme="light"] {
+    --bg: #f4f6f8;
+    --text: #1b2430;
+    --card-bg: #ffffff;
+    --accent: #2d6cdf;
+    --border: #e0e4e8;
+  }
+
+  body {
+    font-family: system-ui, Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s ease, color 0.3s ease; /* smooth theme switch */
+    padding-inline: 1rem; /* logical property: horizontal padding regardless of writing direction */
+  }
+  section {
+    margin: 2rem auto;
+    max-width: 900px;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  section h2 { color: var(--accent); margin-top: 0; }
+  p.note { font-size: 0.9rem; opacity: 0.75; }
+
+  /* =========================================================
+     FLUID TYPOGRAPHY with clamp(min, preferred, max)
+     Scales smoothly with viewport width, but never too small
+     or too large.
+     ========================================================= */
+  .fluid-heading {
+    font-size: clamp(1.5rem, 4vw + 1rem, 3.5rem); /* min 1.5rem, scales with viewport, caps at 3.5rem */
+    line-height: 1.1;
+    margin: 0.25rem 0;
+  }
+  .fluid-para {
+    font-size: clamp(0.95rem, 0.5vw + 0.85rem, 1.15rem); /* subtler fluid scale for body text */
+    max-width: 60ch; /* ch unit: readable measure based on character width */
+  }
+
+  /* =========================================================
+     ASPECT-RATIO: keeps a box's proportions consistent at any
+     width without needing padding-hacks.
+     ========================================================= */
+  .ratio-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .ratio-box {
+    flex: 1 1 200px;
+    aspect-ratio: 16 / 9;      /* widescreen box */
+    background: linear-gradient(135deg,#4dabf7,#364fc7);
+    border-radius: 8px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .ratio-box.square { aspect-ratio: 1 / 1; background: linear-gradient(135deg,#f76707,#ffa94d); }
+  .ratio-box.portrait { aspect-ratio: 3 / 4; background: linear-gradient(135deg,#2f9e44,#69db7c); }
+
+  /* =========================================================
+     MOBILE-FIRST BREAKPOINTS
+     Base styles = mobile. min-width media queries progressively
+     ADD complexity for larger screens (never override-and-undo).
+     ========================================================= */
+  .breakpoint-demo {
+    display: grid;
+    grid-template-columns: 1fr;         /* mobile: 1 column */
+    gap: 0.75rem;
+  }
+  .breakpoint-demo .bp-item {
+    background: #edf2ff;
+    color: #1b2430;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+  }
+  @media (min-width: 600px) {
+    .breakpoint-demo { grid-template-columns: repeat(2, 1fr); } /* tablet: 2 columns */
+  }
+  @media (min-width: 900px) {
+    .breakpoint-demo { grid-template-columns: repeat(4, 1fr); } /* desktop: 4 columns */
+  }
+
+  /* =========================================================
+     prefers-reduced-motion: disable/shorten animation for users
+     who have requested less motion at the OS level.
+     ========================================================= */
+  .motion-demo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .motion-demo { animation: none; } /* respect the user's OS-level request to reduce motion */
+  }
+
+  /* Theme toggle buttons */
+  .toggle-row { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  .toggle-row button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+  <h1 class="fluid-heading">Responsive &amp; Fluid Units</h1>
+  <p class="note" style="max-width:900px;margin:0 auto;">Covers Theory chapter: <strong>08 Responsive Design and Media Queries</strong> (plus fluid units from chapter 04). Resize the window and toggle dark mode below.</p>
+
+  <section>
+    <h2>Fluid Typography with clamp()</h2>
+    <p class="fluid-para">This paragraph's font-size is set with <code>clamp(0.95rem, 0.5vw + 0.85rem, 1.15rem)</code> so it grows gently with the viewport but never shrinks below readable size or grows too large on wide screens. The heading above uses a much larger clamp() range for the same effect.</p>
+  </section>
+
+  <section>
+    <h2>aspect-ratio</h2>
+    <p class="note">Each box keeps its ratio (16:9, 1:1, 3:4) regardless of container width.</p>
+    <div class="ratio-row">
+      <div class="ratio-box">16 / 9</div>
+      <div class="ratio-box square">1 / 1</div>
+      <div class="ratio-box portrait">3 / 4</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Mobile-First Breakpoints</h2>
+    <p class="note">1 column by default, 2 columns from 600px, 4 columns from 900px (min-width media queries add complexity as screens grow).</p>
+    <div class="breakpoint-demo">
+      <div class="bp-item">Item 1</div>
+      <div class="bp-item">Item 2</div>
+      <div class="bp-item">Item 3</div>
+      <div class="bp-item">Item 4</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dark Mode Toggle + prefers-reduced-motion</h2>
+    <p class="note">Dark mode follows your OS setting (prefers-color-scheme) by default; the buttons override it manually via a data-theme attribute. The bouncing ball stops if your OS has "reduce motion" enabled.</p>
+    <div class="motion-demo"></div>
+    <div class="toggle-row">
+      <button onclick="document.documentElement.setAttribute('data-theme','light')">Light</button>
+      <button onclick="document.documentElement.setAttribute('data-theme','dark')">Dark</button>
+      <button onclick="document.documentElement.removeAttribute('data-theme')">Use System</button>
+    </div>
+  </section>
+</body>
+</html>

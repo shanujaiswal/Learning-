@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>04 - Transitions, Animations and Transforms</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+    color: #1b2430;
+  }
+  h1 { text-align: center; padding: 1.5rem 1rem 0; }
+  p.note { text-align: center; color: #566; font-size: 0.9rem; }
+  section {
+    margin: 2rem auto;
+    max-width: 900px;
+    padding: 1.5rem;
+    background: #fff;
+    border: 1px solid #e0e4e8;
+    border-radius: 10px;
+  }
+  section h2 { margin-top: 0; color: #2d6cdf; }
+  .row { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
+
+  /* =========================================================
+     HOVER TRANSITIONS
+     transition property animates smoothly between property
+     states (here: background, transform, box-shadow) on :hover
+     ========================================================= */
+  .hover-btn {
+    padding: 0.9rem 1.6rem;
+    border-radius: 8px;
+    border: none;
+    background: #364fc7;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .hover-btn:hover {
+    background-color: #4263eb;
+    transform: translateY(-4px) scale(1.05); /* lift + grow on hover */
+    box-shadow: 0 8px 16px rgba(54,79,199,0.35);
+  }
+
+  .hover-card {
+    width: 160px;
+    height: 100px;
+    border-radius: 10px;
+    background: linear-gradient(135deg,#f76707,#ffa94d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    transition: transform 0.4s ease, border-radius 0.4s ease;
+  }
+  .hover-card:hover {
+    transform: rotate(-3deg) scale(1.08);
+    border-radius: 30px; /* transitions can animate more than transform/color */
+  }
+
+  /* =========================================================
+     KEYFRAME LOADING SPINNER
+     @keyframes defines the animation steps; animation property
+     applies it, repeating infinitely with a linear timing.
+     ========================================================= */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid #dbe4ff;
+    border-top-color: #364fc7;   /* colored segment creates the "spin" illusion */
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+  .pulse-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #d6336c;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  /* =========================================================
+     CSS-ONLY FLIP CARD
+     perspective on the parent creates 3D depth.
+     transform-style: preserve-3d keeps children in 3D space.
+     backface-visibility: hidden hides the "back" of each face
+     when it is turned away from the viewer.
+     ========================================================= */
+  .flip-scene {
+    width: 220px;
+    height: 150px;
+    perspective: 1000px;       /* viewing distance for the 3D flip */
+  }
+  .flip-card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;      /* children keep their 3D transforms */
+    transition: transform 0.6s;
+  }
+  .flip-scene:hover .flip-card {
+    transform: rotateY(180deg);        /* flip on hover */
+  }
+  .flip-face {
+    position: absolute;
+    inset: 0;                          /* logical shorthand for top/right/bottom/left:0 */
+    backface-visibility: hidden;       /* hide the face when it's rotated away from us */
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #fff;
+  }
+  .flip-front { background: linear-gradient(135deg,#2f9e44,#69db7c); }
+  .flip-back {
+    background: linear-gradient(135deg,#7048e8,#b197fc);
+    transform: rotateY(180deg);        /* pre-rotated so it faces correctly once the card flips */
+  }
+</style>
+</head>
+<body>
+  <h1>Transitions, Animations &amp; Transforms</h1>
+  <p class="note">Covers Theory chapter: <strong>09 Transitions Animations and Transforms</strong>. Hover the elements below.</p>
+
+  <section>
+    <h2>Hover Transitions</h2>
+    <div class="row">
+      <button class="hover-btn">Hover Me</button>
+      <div class="hover-card">Hover card</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>@keyframes Animations</h2>
+    <div class="row">
+      <div class="spinner" aria-label="loading spinner"></div>
+      <div class="pulse-dot" aria-label="pulsing dot"></div>
+      <p class="note" style="margin:0;">Left: infinite rotation spinner. Right: pulsing opacity/scale animation.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>CSS-Only Flip Card</h2>
+    <p class="note">Hover the card - perspective + rotateY + backface-visibility create a 3D flip.</p>
+    <div class="flip-scene">
+      <div class="flip-card">
+        <div class="flip-face flip-front">Front Side</div>
+        <div class="flip-face flip-back">Back Side</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>
