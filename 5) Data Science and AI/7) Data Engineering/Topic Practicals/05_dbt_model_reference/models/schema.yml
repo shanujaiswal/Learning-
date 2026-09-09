@@ -1,0 +1,49 @@
+# models/schema.yml
+#
+# Declarative dbt tests, checked automatically on every `dbt test` run.
+# Directly extends the data-quality-check concept from chapters 01/02 into
+# something version-controlled and enforced on every deploy/CI run.
+
+version: 2
+
+models:
+  - name: stg_orders
+    description: >
+      Cleaned, lightly-typed staging model over the raw staging_orders table --
+      one row per raw order, with bad/refunded/test rows already filtered out.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: amount
+        tests:
+          - not_null
+
+  - name: fact_orders
+    description: >
+      Fact table for the orders star schema -- one row per order event, with
+      foreign keys out to dim_customers and dim_products.
+    columns:
+      - name: order_id
+        tests:
+          - unique       # catches a duplicate order_id from a non-idempotent upstream load (chapter 02)
+          - not_null
+      - name: amount
+        tests:
+          - not_null
+      - name: customer_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_key
+      - name: product_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_key
