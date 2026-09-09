@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Socket.io Chat Client Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 2rem auto; }
+    #messages { list-style: none; padding: 0; border: 1px solid #ccc; height: 260px; overflow-y: auto; margin-bottom: 1rem; }
+    #messages li { padding: 4px 8px; border-bottom: 1px solid #eee; }
+    #messages li.system { color: #888; font-style: italic; }
+    form { display: flex; gap: 8px; }
+    input[type="text"] { flex: 1; padding: 6px; }
+    button { padding: 6px 12px; }
+  </style>
+</head>
+<body>
+  <h1>Socket.io Chat Demo</h1>
+  <p>Companion client for <code>04-websocket-chat-server.js</code>. Start the server first
+     (<code>node 04-websocket-chat-server.js</code>), then open this file in two browser tabs.</p>
+
+  <ul id="messages"></ul>
+
+  <form id="form">
+    <input id="input" type="text" autocomplete="off" placeholder="Type a message..." />
+    <button type="submit">Send</button>
+  </form>
+
+  <!-- Loaded from the running server's built-in Socket.io client bundle. -->
+  <script src="http://localhost:3004/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3004');
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+
+    function addMessage(text, className) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      if (className) li.classList.add(className);
+      messages.appendChild(li);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    socket.on('connect', () => addMessage(`Connected as ${socket.id}`, 'system'));
+    socket.on('system message', (msg) => addMessage(msg, 'system'));
+    socket.on('chat message', (msg) => addMessage(`${msg.id.slice(0, 5)}: ${msg.text}`));
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!input.value.trim()) return;
+      socket.emit('chat message', { text: input.value.trim() });
+      input.value = '';
+    });
+  </script>
+</body>
+</html>

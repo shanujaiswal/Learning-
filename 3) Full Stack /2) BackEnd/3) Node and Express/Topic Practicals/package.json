@@ -1,0 +1,25 @@
+{
+  "name": "node-express-practical",
+  "version": "1.0.0",
+  "description": "Self-contained runnable demos accompanying the Node and Express Theory notes.",
+  "private": true,
+  "main": "01-rest-api-server.js",
+  "scripts": {
+    "rest-api": "node 01-rest-api-server.js",
+    "middleware": "node 02-middleware-chain.js",
+    "jwt-auth": "node 03-jwt-auth-demo.js",
+    "chat-server": "node 04-websocket-chat-server.js",
+    "streams": "node 05-streams-and-eventemitter.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "express-session": "^1.18.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0",
+    "jest": "^29.7.0"
+  }
+}
